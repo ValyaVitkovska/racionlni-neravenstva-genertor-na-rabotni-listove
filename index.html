@@ -32,10 +32,13 @@
 
         .controls { max-width: 1200px; margin: 0 auto; }
         .config-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px dashed var(--border); }
+        .doc-settings { background: #f1f5f9; padding: 15px; border-radius: 8px; border: none; margin-bottom: 20px; border-bottom: none; }
         .control-group { display: flex; flex-direction: column; gap: 5px; }
         .control-group label { font-size: 0.75rem; font-weight: 700; color: #64748b; }
         
-        input[type="number"] { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; background: #fff; width: 60px; }
+        input[type="number"], input[type="text"] { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; background: #fff; }
+        input[type="number"] { width: 60px; }
+        input[type="text"] { width: 220px; }
         input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
 
         .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; }
@@ -81,20 +84,33 @@
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                 <h2 style="margin:0; color: var(--accent);">Генератор на тестове</h2>
                 <div style="display: flex; gap: 15px;">
-                    <div class="control-group">
-                        <label>Брой варианти:</label>
-                        <input type="number" id="v-count" value="2" min="1" max="20" style="width: 80px;">
-                    </div>
-                    <div class="control-group" style="justify-content: flex-end; padding-bottom: 8px;">
-                        <label style="display:flex; align-items:center; gap:5px; cursor:pointer; margin:0; font-weight:bold; font-size:0.85rem; color:#475569;">
-                            <input type="checkbox" id="g-show-points" checked> С точки
-                        </label>
-                    </div>
                     <button class="btn btn-blue" onclick="generate()" style="margin-top: auto;">🔄 1. Генерирай</button>
                     <button class="btn btn-green" id="btn-download" onclick="downloadPrintableHTML()" style="margin-top: auto;" disabled>⏳ 2. Изчакване...</button>
                 </div>
             </div>
 
+            <!-- Настройки на документа -->
+            <div class="config-row doc-settings">
+                <div class="control-group">
+                    <label>Заглавие на документа:</label>
+                    <input type="text" id="g-title" value="Контролна работа">
+                </div>
+                <div class="control-group">
+                    <label>Подзаглавие (Тема):</label>
+                    <input type="text" id="g-subtitle" value="Тема: Метод на интервалите">
+                </div>
+                <div class="control-group">
+                    <label>Брой варианти:</label>
+                    <input type="number" id="v-count" value="2" min="1" max="20" style="width: 80px;">
+                </div>
+                <div class="control-group" style="justify-content: flex-end; padding-bottom: 8px;">
+                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer; margin:0; font-weight:bold; font-size:0.85rem; color:#475569;">
+                        <input type="checkbox" id="g-show-points" checked> С точки
+                    </label>
+                </div>
+            </div>
+
+            <!-- Настройки на задачите -->
             <div class="config-row">
                 <div class="control-group">
                     <label>Брой задачи</label>
@@ -395,6 +411,8 @@
         if (taskGroups.length === 0) return alert('Моля, добавете поне една група със задачи!');
         
         const showPoints = document.getElementById('g-show-points').checked;
+        const docTitle = document.getElementById('g-title').value || 'Контролна работа';
+        const docSubtitle = document.getElementById('g-subtitle').value || '';
         
         const btn = document.getElementById('btn-download');
         btn.disabled = true;
@@ -413,8 +431,8 @@
             let html = `
                 <div class="page-header">
                     <div>
-                        <h1 style="margin:0; font-size: 1.8rem;">Контролна работа</h1>
-                        <div style="font-size:1.1rem; margin-top:5px; color: #444;">Тема: Метод на интервалите</div>
+                        <h1 style="margin:0; font-size: 1.8rem;">${docTitle}</h1>
+                        <div style="font-size:1.1rem; margin-top:5px; color: #444;">${docSubtitle}</div>
                     </div>
                     <div style="text-align:right">
                         <b style="font-size: 1.3rem;">Вариант ${v}</b><br>
@@ -517,12 +535,13 @@
         const content = document.getElementById('output').innerHTML;
         const mathStyles = document.getElementById('MJX-SVG-styles');
         const styleStr = mathStyles ? mathStyles.outerHTML : '';
+        const docTitle = document.getElementById('g-title').value || 'Контролна работа';
 
         const rawHtml = `<!DOCTYPE html>
 <html lang="bg">
 <head>
     <meta charset="UTF-8">
-    <title>Контролна работа</title>
+    <title>${docTitle}</title>
     <style>
         body { font-family: 'Times New Roman', Times, serif; margin: 0; padding: 0; background: #fff; color: #000; }
         .page { width: 210mm; margin: 0 auto; padding: 15mm; box-sizing: border-box; page-break-after: always; position: relative; }
@@ -557,7 +576,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'Контролна_Интервали_Пълна.html';
+        a.download = 'Документ_Интервали_Пълна.html';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
