@@ -85,6 +85,11 @@
                         <label>Брой варианти:</label>
                         <input type="number" id="v-count" value="2" min="1" max="20" style="width: 80px;">
                     </div>
+                    <div class="control-group" style="justify-content: flex-end; padding-bottom: 8px;">
+                        <label style="display:flex; align-items:center; gap:5px; cursor:pointer; margin:0; font-weight:bold; font-size:0.85rem; color:#475569;">
+                            <input type="checkbox" id="g-show-points" checked> С точки
+                        </label>
+                    </div>
                     <button class="btn btn-blue" onclick="generate()" style="margin-top: auto;">🔄 1. Генерирай</button>
                     <button class="btn btn-green" id="btn-download" onclick="downloadPrintableHTML()" style="margin-top: auto;" disabled>⏳ 2. Изчакване...</button>
                 </div>
@@ -104,12 +109,12 @@
                     <input type="number" id="g-denom" value="0" min="0" max="4">
                 </div>
                 <div class="control-group">
-                    <label>Квадр. (D<0)</label>
-                    <input type="number" id="g-quad" value="0" min="0" max="3" title="Няма реални корени (винаги +)">
+                    <label>Квадр. (числ.)</label>
+                    <input type="number" id="g-quad-num" value="0" min="0" max="3">
                 </div>
                 <div class="control-group">
-                    <label>Квадр. (D≥0)</label>
-                    <input type="number" id="g-quad-roots" value="0" min="0" max="3" title="Има реални корени (подлежи на разлагане)">
+                    <label>Квадр. (знам.)</label>
+                    <input type="number" id="g-quad-denom" value="0" min="0" max="3">
                 </div>
                 <div class="control-group">
                     <label style="color: var(--accent);">Бикв. ($x^4$)</label>
@@ -130,8 +135,8 @@
                         <th>Задачи</th>
                         <th>Лин. (ч.)</th>
                         <th>Лин. (з.)</th>
-                        <th>Квадр.(D<0)</th>
-                        <th>Квадр.(D≥0)</th>
+                        <th>Квадр. (ч.)</th>
+                        <th>Квадр. (з.)</th>
                         <th>Бикв.($x^4$)</th>
                         <th>Степени?</th>
                         <th>Действие</th>
@@ -148,23 +153,23 @@
 
 <script>
     let taskGroups = [
-        { count: 1, lin: 2, quad: 0, quadRoots: 0, bi: 0, denom: 0, hasPowers: false }, 
-        { count: 1, lin: 2, quad: 0, quadRoots: 1, bi: 0, denom: 1, hasPowers: true },
-        { count: 1, lin: 0, quad: 0, quadRoots: 0, bi: 1, denom: 0, hasPowers: false }
+        { count: 1, lin: 2, quadNum: 0, quadDenom: 0, bi: 0, denom: 0, hasPowers: false }, 
+        { count: 1, lin: 1, quadNum: 1, quadDenom: 1, bi: 0, denom: 1, hasPowers: true },
+        { count: 1, lin: 0, quadNum: 1, quadDenom: 0, bi: 1, denom: 0, hasPowers: false }
     ];
 
     function addGroup() {
         let count = parseInt(document.getElementById('g-count').value) || 1;
         let lin = parseInt(document.getElementById('g-lin').value) || 0;
-        let quad = parseInt(document.getElementById('g-quad').value) || 0;
-        let quadRoots = parseInt(document.getElementById('g-quad-roots').value) || 0;
+        let quadNum = parseInt(document.getElementById('g-quad-num').value) || 0;
+        let quadDenom = parseInt(document.getElementById('g-quad-denom').value) || 0;
         let bi = parseInt(document.getElementById('g-bi').value) || 0;
         let denom = parseInt(document.getElementById('g-denom').value) || 0;
         let hasPowers = document.getElementById('g-powers').checked;
         
-        if (lin === 0 && quad === 0 && quadRoots === 0 && denom === 0 && bi === 0) lin = 2;
+        if (lin === 0 && quadNum === 0 && quadDenom === 0 && denom === 0 && bi === 0) lin = 2;
 
-        taskGroups.push({ count, lin, quad, quadRoots, bi, denom, hasPowers });
+        taskGroups.push({ count, lin, quadNum, quadDenom, bi, denom, hasPowers });
         renderConfig();
     }
 
@@ -180,8 +185,8 @@
                 <td><b>${g.count}</b> бр.</td>
                 <td>${g.lin}</td>
                 <td>${g.denom}</td>
-                <td>${g.quad}</td>
-                <td>${g.quadRoots}</td>
+                <td>${g.quadNum}</td>
+                <td>${g.quadDenom}</td>
                 <td style="color:var(--accent); font-weight:bold;">${g.bi}</td>
                 <td>${g.hasPowers ? 'Да' : 'Не'}</td>
                 <td><button class="btn btn-red" onclick="removeGroup(${i})">Изтрий</button></td>
@@ -211,21 +216,21 @@
         return factors;
     }
 
-    function generateQuadraticNoRoots() {
-        // 50% шанс старшият коефициент да е отрицателен (напр. -x^2 - 2x - 5)
+    function generateQuadratic(isDenom) {
         let a = Math.random() > 0.5 ? -1 : 1;
-        let bBase = rand(-4, 4);
-        let cBase = Math.ceil((bBase*bBase + 4) / 4) + rand(1, 4); // D < 0
-        return { type: 'quad', a: a, b: a * bBase, c: a * cBase };
-    }
-
-    function generateQuadraticWithRoots() {
-        let a = Math.random() > 0.5 ? -1 : 1;
-        let r1 = rand(-6, 6);
-        let r2 = rand(-6, 6);
-        let b = -a * (r1 + r2);
-        let c = a * r1 * r2;
-        return { type: 'quadRoots', a: a, b: b, c: c, roots: [r1, r2] };
+        let hasRoots = Math.random() > 0.5; // 50% шанс за реални корени (D >= 0) или без корени (D < 0)
+        
+        if (hasRoots) {
+            let r1 = rand(-6, 6);
+            let r2 = rand(-6, 6);
+            let b = -a * (r1 + r2);
+            let c = a * r1 * r2;
+            return { type: 'quadRoots', a: a, b: b, c: c, roots: [r1, r2], isDenom: isDenom };
+        } else {
+            let bBase = rand(-4, 4);
+            let cBase = Math.ceil((bBase*bBase + 4) / 4) + rand(1, 4); // Гарантира D < 0
+            return { type: 'quad', a: a, b: a * bBase, c: a * cBase, isDenom: isDenom };
+        }
     }
 
     function generateBiquadratic() {
@@ -297,7 +302,7 @@
             if (f.type === 'lin') {
                 addRoot(f.root, f.power, f.isDenom);
             } else if (f.type === 'quadRoots') {
-                f.roots.forEach(r => addRoot(r, 1, false)); 
+                f.roots.forEach(r => addRoot(r, 1, f.isDenom)); 
             } else if (f.type === 'biquad') {
                 const processT = (t) => {
                     if (t > 0) {
@@ -389,6 +394,8 @@
     function generate() {
         if (taskGroups.length === 0) return alert('Моля, добавете поне една група със задачи!');
         
+        const showPoints = document.getElementById('g-show-points').checked;
+        
         const btn = document.getElementById('btn-download');
         btn.disabled = true;
         btn.innerHTML = '⏳ 2. Изчертаване...';
@@ -420,17 +427,18 @@
             taskGroups.forEach(group => {
                 for (let i = 0; i < group.count; i++) {
                     let num = generateUniqueFactors(group.lin, false, group.hasPowers);
-                    for(let j=0; j<group.quad; j++) num.push(generateQuadraticNoRoots());
-                    for(let j=0; j<group.quadRoots; j++) num.push(generateQuadraticWithRoots());
+                    for(let j=0; j<group.quadNum; j++) num.push(generateQuadratic(false));
                     for(let j=0; j<group.bi; j++) num.push(generateBiquadratic());
                     
                     let den = generateUniqueFactors(group.denom, true, group.hasPowers);
+                    for(let j=0; j<group.quadDenom; j++) den.push(generateQuadratic(true));
+                    
                     if (num.length === 0 && den.length === 0) num.push({type:'lin', root: rand(-3,3), power:1, isDenom:false, a:1});
 
                     const sign = ['>', '<', '\\ge', '\\le'][rand(0, 3)];
                     problems.push({ 
                         num, den, sign, 
-                        complexity: (group.lin + group.quad*1.5 + group.quadRoots*2 + group.bi*3 + group.denom*1.2) 
+                        complexity: (group.lin + group.quadNum*1.5 + group.quadDenom*1.5 + group.bi*3 + group.denom*1.2) 
                     });
                 }
             });
@@ -454,11 +462,13 @@
                     displayTex = numTex === '' ? `\\frac{1}{${denTex}}` : `\\frac{${numTex}}{${denTex}}`;
                 }
 
+                let pointsHtml = showPoints ? `<span class="problem-points">${p.pts} точки</span>` : '';
+
                 html += `
                     <div class="problem">
                         <div class="problem-header">
                             <span>Задача ${i+1}. Решете неравенството:</span>
-                            <span class="problem-points">${p.pts} точки</span>
+                            ${pointsHtml}
                         </div>
                         <div class="problem-body">
                             \\[ ${displayTex} ${p.sign} 0 \\]
@@ -468,7 +478,10 @@
                 p.finalAns = solveInequality(p.num, p.den, p.sign);
             });
 
-            html += `<div style="text-align:right; font-weight:bold; font-size: 1.2rem; margin-top: 30px;">Общо: 40 точки</div>`;
+            if (showPoints) {
+                html += `<div style="text-align:right; font-weight:bold; font-size: 1.2rem; margin-top: 30px;">Общо: 40 точки</div>`;
+            }
+            
             page.innerHTML = html;
             output.appendChild(page);
             allAnswers.push(problems);
