@@ -419,24 +419,61 @@
 
     // 2. Дробно с число (N(x)/D(x) <= C)
     function generateFractionalRHSProblem() {
-        let r1 = rand(-4, 4), r2 = rand(-4, 4);
-        while(r2 === r1) r2 = rand(-4, 4);
-
-        let a_d = 1, b_d = -(r1 + r2), c_d = r1 * r2;
-        let C = [-2, -1, 1, 2][rand(0, 3)];
-        
-        let A = [-3, -2, -1, 1, 2, 3][rand(0, 5)];
-        let r3 = rand(-5, 5);
-
-        // N(x) = C*D(x) + A(x - r3) -> Ensures beautiful cancellation
-        let a_n = C * a_d;
-        let b_n = C * b_d + A;
-        let c_n = C * c_d - A * r3;
-
+        let a_d, b_d, c_d, a_n, b_n, c_n, C, r1, r2, p_roots;
         let sign = ['>', '<', '\\ge', '\\le'][rand(0, 3)];
+
+        do {
+            do {
+                r1 = rand(-5, 5);
+                r2 = rand(-5, 5);
+            } while(r1 === r2);
+
+            a_d = 1;
+            b_d = -(r1 + r2);
+            c_d = r1 * r2;
+            
+            C = [-3, -2, -1, 1, 2, 3][rand(0, 5)];
+            
+            let isQuadraticFinal = Math.random() > 0.4; // 60% шанс след прехвърляне да остане квадратен тричлен
+            p_roots = [r1, r2];
+
+            if (isQuadraticFinal) {
+                // Генерираме крайни хубави корени (може и дробни)
+                let a1 = rand(1, 3) * (Math.random()>0.5?1:-1);
+                let b1 = rand(-5, 5);
+                let a2 = rand(1, 3) * (Math.random()>0.5?1:-1);
+                let b2 = rand(-5, 5);
+                
+                let a_nf = a1 * a2;
+                let b_nf = -a1 * b2 - a2 * b1;
+                let c_nf = b1 * b2;
+                
+                a_n = a_nf + C * a_d;
+                b_n = b_nf + C * b_d;
+                c_n = c_nf + C * c_d;
+                
+                p_roots.push(b1/a1);
+                p_roots.push(b2/a2);
+            } else {
+                // След прехвърляне остава линейно уравнение (x^2 се унищожава)
+                let a1 = rand(1, 5) * (Math.random()>0.5?1:-1);
+                let b1 = rand(-10, 10);
+                
+                let a_nf = 0;
+                let b_nf = a1;
+                let c_nf = b1;
+                
+                a_n = a_nf + C * a_d;
+                b_n = b_nf + C * b_d;
+                c_n = c_nf + C * c_d;
+                
+                p_roots.push(-b1/a1);
+            }
+        } while (a_n === 0); // Гарантираме, че ПЪРВОНАЧАЛНИЯТ числител винаги е квадратен тричлен (a_n != 0)
+
         let displayTex = `\\frac{${getPolyTex(a_n, b_n, c_n)}}{${getPolyTex(a_d, b_d, c_d)}} ${sign} ${C}`;
 
-        return { type: 'fractional_rhs', displayTex, sign, C, a_n, b_n, c_n, a_d, b_d, c_d, roots: [r1, r2, r3], complexity: 8 };
+        return { type: 'fractional_rhs', displayTex, sign, C, a_n, b_n, c_n, a_d, b_d, c_d, roots: p_roots, complexity: 8 };
     }
 
     function solveFractionalRHS(p) {
