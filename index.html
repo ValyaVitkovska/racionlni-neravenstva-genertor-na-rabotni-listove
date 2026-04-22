@@ -213,7 +213,7 @@
             } else if (g.type === 'fractional_rhs') {
                 desc = `<b style="color:#d97706">Дробно с число:</b> Уравнения от вида $\\frac{ax^2+bx+c}{dx^2+ex+f} \\le C$`;
             } else if (g.type === 'system_linear') {
-                desc = `<b style="color:#059669">Система:</b> Система от 2 или 3 линейни неравенства`;
+                desc = `<b style="color:#059669">Система:</b> Система от 2 линейни неравенства`;
             }
 
             return `
@@ -499,7 +499,7 @@
 
     // 3. Система линейни
     function generateSystemLinearProblem() {
-        let sysSize = Math.random() > 0.7 ? 3 : 2;
+        let sysSize = 2; // Вече винаги генерира точно 2 неравенства
         let ineqs = [];
         let signs = ['>', '<', '\\ge', '\\le'];
 
