@@ -484,7 +484,7 @@
 
         return {
             type: 'system_linear',
-            displayTex: `\\begin{cases} ${texLines.join(' \\\\ ')} \\end{cases}`,
+            displayTex: `\\left| \\begin{array}{l} ${texLines.join(' \\\\ ')} \\end{array} \\right.`,
             ineqs, roots: ineqs.map(i => i.root), complexity: 5 + sysSize * 2
         };
     }
