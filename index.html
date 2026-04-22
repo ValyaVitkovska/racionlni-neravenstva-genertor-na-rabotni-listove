@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Генератор: Метод на интервалите</title>
+    <title>Генератор: Метод на интервалите и системи</title>
     
     <script>
         window.MathJax = {
@@ -36,7 +36,8 @@
         .control-group { display: flex; flex-direction: column; gap: 5px; }
         .control-group label { font-size: 0.75rem; font-weight: 700; color: #64748b; }
         
-        input[type="number"], input[type="text"] { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; background: #fff; }
+        select, input[type="number"], input[type="text"] { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; background: #fff; outline: none; }
+        select { cursor: pointer; }
         input[type="number"] { width: 60px; }
         input[type="text"] { width: 220px; }
         input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
@@ -49,7 +50,7 @@
 
         .task-list-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 10px; }
         .task-list-table th { text-align: left; padding: 10px; background: #f1f5f9; color: #475569; border-radius: 6px 6px 0 0;}
-        .task-list-table td { padding: 10px; border-bottom: 1px solid var(--border); }
+        .task-list-table td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 
         .preview-container { display: flex; flex-direction: column; align-items: center; padding: 40px 0; gap: 40px; }
         
@@ -97,7 +98,7 @@
                 </div>
                 <div class="control-group">
                     <label>Подзаглавие (Тема):</label>
-                    <input type="text" id="g-subtitle" value="Тема: Метод на интервалите">
+                    <input type="text" id="g-subtitle" value="Тема: Метод на интервалите и системи">
                 </div>
                 <div class="control-group">
                     <label>Брой варианти:</label>
@@ -111,51 +112,42 @@
             </div>
 
             <!-- Настройки на задачите -->
-            <div class="config-row">
+            <div class="config-row" style="background: #e0f2fe; padding: 15px; border-radius: 8px; border: none; align-items: center;">
                 <div class="control-group">
-                    <label>Брой задачи</label>
-                    <input type="number" id="g-count" value="2" min="1" max="10">
-                </div>
-                <div class="control-group">
-                    <label>Лин. (числ.)</label>
-                    <input type="number" id="g-lin" value="2" min="0" max="6">
-                </div>
-                <div class="control-group">
-                    <label>Лин. (знам.)</label>
-                    <input type="number" id="g-denom" value="0" min="0" max="4">
-                </div>
-                <div class="control-group">
-                    <label>Квадр. (числ.)</label>
-                    <input type="number" id="g-quad-num" value="0" min="0" max="3">
-                </div>
-                <div class="control-group">
-                    <label>Квадр. (знам.)</label>
-                    <input type="number" id="g-quad-denom" value="0" min="0" max="3">
-                </div>
-                <div class="control-group">
-                    <label style="color: var(--accent);">Бикв. ($x^4$)</label>
-                    <input type="number" id="g-bi" value="0" min="0" max="3" title="Биквадратно уравнение (x^4 + bx^2 + c)">
+                    <label style="color: #0369a1;">Добавяне на задача от тип:</label>
+                    <select id="g-task-type" onchange="toggleTaskOptions()" style="width: 300px; border-color: #7dd3fc;">
+                        <option value="standard">1. Метод на интервалите (стандартен)</option>
+                        <option value="fractional_rhs">2. Дробни с число отдясно (напр. ≤ 1)</option>
+                        <option value="system_linear">3. Системи линейни неравенства</option>
+                    </select>
                 </div>
                 
-                <div class="control-group" style="flex-direction: row; align-items: center; gap: 8px; margin-bottom: 5px; margin-left: 10px;">
-                    <input type="checkbox" id="g-powers">
-                    <label for="g-powers" style="margin:0; cursor:pointer; font-size:0.85rem;">Случайни степени</label>
+                <div class="control-group">
+                    <label style="color: #0369a1;">Брой:</label>
+                    <input type="number" id="g-count" value="1" min="1" max="10" style="border-color: #7dd3fc;">
                 </div>
 
-                <button class="btn btn-blue" onclick="addGroup()" style="margin-top: auto;">➕ Добави</button>
+                <!-- Опции само за стандартен метод -->
+                <div id="opt-standard" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-left: 10px; border-left: 2px solid #bae6fd; padding-left: 15px;">
+                    <div class="control-group"><label>Лин. (ч.)</label><input type="number" id="g-lin" value="2" min="0" max="6"></div>
+                    <div class="control-group"><label>Лин. (з.)</label><input type="number" id="g-denom" value="0" min="0" max="4"></div>
+                    <div class="control-group"><label>Кв. (ч.)</label><input type="number" id="g-quad-num" value="0" min="0" max="3"></div>
+                    <div class="control-group"><label>Кв. (з.)</label><input type="number" id="g-quad-denom" value="0" min="0" max="3"></div>
+                    <div class="control-group"><label style="color: var(--accent);">Бикв.</label><input type="number" id="g-bi" value="0" min="0" max="3"></div>
+                    <div class="control-group" style="justify-content: center; margin-left: 5px;">
+                        <label style="display:flex; align-items:center; gap:5px; margin:0; cursor:pointer;"><input type="checkbox" id="g-powers"> Степени</label>
+                    </div>
+                </div>
+
+                <button class="btn btn-blue" onclick="addGroup()" style="margin-left: auto;">➕ Добави към списъка</button>
             </div>
 
             <table class="task-list-table">
                 <thead>
                     <tr>
-                        <th>Задачи</th>
-                        <th>Лин. (ч.)</th>
-                        <th>Лин. (з.)</th>
-                        <th>Квадр. (ч.)</th>
-                        <th>Квадр. (з.)</th>
-                        <th>Бикв.($x^4$)</th>
-                        <th>Степени?</th>
-                        <th>Действие</th>
+                        <th style="width: 10%;">Брой</th>
+                        <th style="width: 75%;">Описание на групата задачи</th>
+                        <th style="width: 15%;">Действие</th>
                     </tr>
                 </thead>
                 <tbody id="config-body"></tbody>
@@ -169,23 +161,34 @@
 
 <script>
     let taskGroups = [
-        { count: 1, lin: 2, quadNum: 0, quadDenom: 0, bi: 0, denom: 0, hasPowers: false }, 
-        { count: 1, lin: 1, quadNum: 1, quadDenom: 1, bi: 0, denom: 1, hasPowers: true },
-        { count: 1, lin: 0, quadNum: 1, quadDenom: 0, bi: 1, denom: 0, hasPowers: false }
+        { type: 'standard', count: 1, lin: 2, quadNum: 0, quadDenom: 0, bi: 0, denom: 1, hasPowers: false }, 
+        { type: 'fractional_rhs', count: 1 },
+        { type: 'system_linear', count: 1 }
     ];
 
-    function addGroup() {
-        let count = parseInt(document.getElementById('g-count').value) || 1;
-        let lin = parseInt(document.getElementById('g-lin').value) || 0;
-        let quadNum = parseInt(document.getElementById('g-quad-num').value) || 0;
-        let quadDenom = parseInt(document.getElementById('g-quad-denom').value) || 0;
-        let bi = parseInt(document.getElementById('g-bi').value) || 0;
-        let denom = parseInt(document.getElementById('g-denom').value) || 0;
-        let hasPowers = document.getElementById('g-powers').checked;
-        
-        if (lin === 0 && quadNum === 0 && quadDenom === 0 && denom === 0 && bi === 0) lin = 2;
+    function toggleTaskOptions() {
+        const type = document.getElementById('g-task-type').value;
+        document.getElementById('opt-standard').style.display = type === 'standard' ? 'flex' : 'none';
+    }
 
-        taskGroups.push({ count, lin, quadNum, quadDenom, bi, denom, hasPowers });
+    function addGroup() {
+        let type = document.getElementById('g-task-type').value;
+        let count = parseInt(document.getElementById('g-count').value) || 1;
+        
+        if (type === 'standard') {
+            let lin = parseInt(document.getElementById('g-lin').value) || 0;
+            let quadNum = parseInt(document.getElementById('g-quad-num').value) || 0;
+            let quadDenom = parseInt(document.getElementById('g-quad-denom').value) || 0;
+            let bi = parseInt(document.getElementById('g-bi').value) || 0;
+            let denom = parseInt(document.getElementById('g-denom').value) || 0;
+            let hasPowers = document.getElementById('g-powers').checked;
+            
+            if (lin === 0 && quadNum === 0 && quadDenom === 0 && denom === 0 && bi === 0) lin = 2;
+
+            taskGroups.push({ type, count, lin, quadNum, quadDenom, bi, denom, hasPowers });
+        } else {
+            taskGroups.push({ type, count });
+        }
         renderConfig();
     }
 
@@ -196,144 +199,43 @@
 
     function renderConfig() {
         const body = document.getElementById('config-body');
-        body.innerHTML = taskGroups.map((g, i) => `
+        body.innerHTML = taskGroups.map((g, i) => {
+            let desc = '';
+            if (g.type === 'standard') {
+                let parts = [];
+                if (g.lin) parts.push(`Лин(ч): ${g.lin}`);
+                if (g.denom) parts.push(`Лин(з): ${g.denom}`);
+                if (g.quadNum) parts.push(`Кв(ч): ${g.quadNum}`);
+                if (g.quadDenom) parts.push(`Кв(з): ${g.quadDenom}`);
+                if (g.bi) parts.push(`Бикв: ${g.bi}`);
+                if (g.hasPowers) parts.push(`Степени: Да`);
+                desc = `<b style="color:var(--accent)">Стандартен метод:</b> ` + parts.join(', ');
+            } else if (g.type === 'fractional_rhs') {
+                desc = `<b style="color:#d97706">Дробно с число:</b> Уравнения от вида $\\frac{ax^2+bx+c}{dx^2+ex+f} \\le C$`;
+            } else if (g.type === 'system_linear') {
+                desc = `<b style="color:#059669">Система:</b> Система от 2 или 3 линейни неравенства`;
+            }
+
+            return `
             <tr>
-                <td><b>${g.count}</b> бр.</td>
-                <td>${g.lin}</td>
-                <td>${g.denom}</td>
-                <td>${g.quadNum}</td>
-                <td>${g.quadDenom}</td>
-                <td style="color:var(--accent); font-weight:bold;">${g.bi}</td>
-                <td>${g.hasPowers ? 'Да' : 'Не'}</td>
+                <td><b style="font-size:1.1rem">${g.count}</b> бр.</td>
+                <td>${desc}</td>
                 <td><button class="btn btn-red" onclick="removeGroup(${i})">Изтрий</button></td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
+        
+        // Render math in the descriptions
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            MathJax.typesetPromise([body]);
+        }
     }
 
     const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-    function generateUniqueFactors(count, isDenom, hasPowers) {
-        let factors = [];
-        let usedRoots = new Set();
-        for(let i = 0; i < count; i++) {
-            let root;
-            let attempts = 0;
-            do { root = rand(-7, 7); attempts++; } while(usedRoots.has(root) && attempts < 50); 
-            usedRoots.add(root);
-            
-            let p = 1;
-            if (hasPowers && Math.random() > 0.3) p = rand(2, 9);
-            
-            // 50% шанс старшият коефициент да е отрицателен (напр. 5 - x)
-            let a = Math.random() > 0.5 ? -1 : 1;
-            
-            factors.push({ type: 'lin', root, power: p, isDenom, a });
-        }
-        return factors;
-    }
-
-    function generateQuadratic(isDenom) {
-        let a = Math.random() > 0.5 ? -1 : 1;
-        let hasRoots = Math.random() > 0.5; // 50% шанс за реални корени (D >= 0) или без корени (D < 0)
-        
-        if (hasRoots) {
-            let r1 = rand(-6, 6);
-            let r2 = rand(-6, 6);
-            let b = -a * (r1 + r2);
-            let c = a * r1 * r2;
-            return { type: 'quadRoots', a: a, b: b, c: c, roots: [r1, r2], isDenom: isDenom };
-        } else {
-            let bBase = rand(-4, 4);
-            let cBase = Math.ceil((bBase*bBase + 4) / 4) + rand(1, 4); // Гарантира D < 0
-            return { type: 'quad', a: a, b: a * bBase, c: a * cBase, isDenom: isDenom };
-        }
-    }
-
-    function generateBiquadratic() {
-        let a = Math.random() > 0.5 ? -1 : 1;
-        const possibleT = [-4, -1, 0, 1, 4, 9];
-        let t1 = possibleT[rand(0, possibleT.length - 1)];
-        let t2 = possibleT[rand(0, possibleT.length - 1)];
-        
-        let b = -a * (t1 + t2);
-        let c = a * t1 * t2;
-        return { type: 'biquad', a: a, b: b, c: c, t1, t2 };
-    }
-
-    function getFactorTex(f) {
-        if (f.type === 'lin') {
-            let base = '';
-            if (f.a === 1) {
-                const sign = f.root === 0 ? '' : (f.root > 0 ? '-' : '+');
-                const val = f.root === 0 ? '' : Math.abs(f.root);
-                base = f.root === 0 ? 'x' : `(x ${sign} ${val})`;
-            } else { // f.a === -1
-                if (f.root === 0) base = '(-x)';
-                else if (f.root > 0) base = `(${f.root} - x)`;
-                else base = `(-x - ${Math.abs(f.root)})`;
-            }
-            return f.power > 1 ? `${base}^{${f.power}}` : base;
-        } else if (f.type === 'quad' || f.type === 'quadRoots') {
-            let terms = [];
-            terms.push(f.a === 1 ? 'x^2' : '-x^2');
-            if (f.b !== 0) {
-                const bSign = f.b > 0 ? '+' : '-';
-                const bVal = Math.abs(f.b) === 1 ? 'x' : Math.abs(f.b) + 'x';
-                terms.push(`${bSign} ${bVal}`);
-            }
-            if (f.c !== 0) {
-                const cSign = f.c > 0 ? '+' : '-';
-                const cVal = Math.abs(f.c);
-                terms.push(`${cSign} ${cVal}`);
-            }
-            return `(${terms.join(' ')})`;
-        } else if (f.type === 'biquad') {
-            let terms = [];
-            terms.push(f.a === 1 ? 'x^4' : '-x^4');
-            if (f.b !== 0) {
-                const bSign = f.b > 0 ? '+' : '-';
-                const bVal = Math.abs(f.b) === 1 ? 'x^2' : Math.abs(f.b) + 'x^2';
-                terms.push(`${bSign} ${bVal}`);
-            }
-            if (f.c !== 0) {
-                const cSign = f.c > 0 ? '+' : '-';
-                const cVal = Math.abs(f.c);
-                terms.push(`${cSign} ${cVal}`);
-            }
-            return `(${terms.join(' ')})`;
-        }
-    }
-
-    function solveInequality(numFactors, denFactors, sign) {
-        let rootsMap = {};
-        const allFactors = [...numFactors, ...denFactors];
-        
-        const addRoot = (root, pow, isDenom) => {
-            if (!rootsMap[root]) rootsMap[root] = { power: 0, isDenom: false };
-            rootsMap[root].power += pow;
-            if (isDenom) rootsMap[root].isDenom = true;
-        };
-
-        allFactors.forEach(f => {
-            if (f.type === 'lin') {
-                addRoot(f.root, f.power, f.isDenom);
-            } else if (f.type === 'quadRoots') {
-                f.roots.forEach(r => addRoot(r, 1, f.isDenom)); 
-            } else if (f.type === 'biquad') {
-                const processT = (t) => {
-                    if (t > 0) {
-                        addRoot(Math.sqrt(t), 1, false);
-                        addRoot(-Math.sqrt(t), 1, false);
-                    } else if (t === 0) {
-                        addRoot(0, 2, false); 
-                    }
-                };
-                processT(f.t1);
-                processT(f.t2);
-            }
-        });
-
-        const sortedRoots = Object.keys(rootsMap).map(Number).sort((a, b) => a - b);
+    // --- УНИВЕРСАЛЕН РЕШАВАЩ МОДУЛ ---
+    function evaluateIntervals(roots, testFn, isBoundValidFn) {
+        let sortedRoots = [...new Set(roots)].sort((a, b) => a - b);
         let testPoints = [];
         
         if (sortedRoots.length === 0) {
@@ -349,42 +251,9 @@
             testPoints.push({ type: 'interval', start: sortedRoots[sortedRoots.length-1], end: Infinity, testVal: sortedRoots[sortedRoots.length-1] + 1 });
         }
 
-        const checkSign = (x) => {
-            let resSign = 1;
-            allFactors.forEach(f => {
-                let val = 0;
-                if (f.type === 'lin') {
-                    val = f.a * (x - f.root);
-                } else if (f.type === 'biquad') {
-                    val = f.a * Math.pow(x, 4) + f.b * Math.pow(x, 2) + f.c;
-                } else {
-                    val = f.a * x * x + f.b * x + f.c;
-                }
-
-                if (Math.abs(val) < 1e-9) resSign = 0;
-                else if (val > 0) resSign *= 1;
-                else {
-                    // Ако множителят е повдигнат на степен, съобразяваме знака
-                    let p = f.power || 1;
-                    resSign *= (p % 2 === 0 ? 1 : -1);
-                }
-            });
-            return resSign;
-        };
-
-        const isMatch = (valSign, isRoot, rootVal) => {
-            if (isRoot && rootsMap[rootVal] && rootsMap[rootVal].isDenom) return false;
-            
-            if (sign === '>') return valSign > 0;
-            if (sign === '<') return valSign < 0;
-            if (sign === '\\ge') return valSign > 0 || (isRoot && valSign === 0);
-            if (sign === '\\le') return valSign < 0 || (isRoot && valSign === 0);
-            return false;
-        };
-
         testPoints.forEach(tp => {
-            let calculatedSign = checkSign(tp.type === 'interval' ? tp.testVal : tp.val);
-            tp.valid = isMatch(calculatedSign, tp.type === 'point', tp.val);
+            if (tp.type === 'interval') tp.valid = testFn(tp.testVal);
+            else tp.valid = isBoundValidFn(tp.val);
         });
 
         let segments = [];
@@ -407,6 +276,233 @@
         return `x \\in ` + segments.join(' \\cup ');
     }
 
+    // --- ПОМОЩНИ ФУНКЦИИ ЗА ГЕНЕРИРАНЕ ---
+    function generateUniqueFactors(count, isDenom, hasPowers) {
+        let factors = [];
+        let usedRoots = new Set();
+        for(let i = 0; i < count; i++) {
+            let root; let attempts = 0;
+            do { root = rand(-7, 7); attempts++; } while(usedRoots.has(root) && attempts < 50); 
+            usedRoots.add(root);
+            
+            let p = 1;
+            if (hasPowers && Math.random() > 0.3) p = rand(2, 9);
+            let a = Math.random() > 0.5 ? -1 : 1;
+            factors.push({ type: 'lin', root, power: p, isDenom, a });
+        }
+        return factors;
+    }
+
+    function generateQuadratic(isDenom) {
+        let a = Math.random() > 0.5 ? -1 : 1;
+        let hasRoots = Math.random() > 0.5; 
+        if (hasRoots) {
+            let r1 = rand(-6, 6), r2 = rand(-6, 6);
+            return { type: 'quadRoots', a, b: -a*(r1+r2), c: a*r1*r2, roots: [r1, r2], isDenom };
+        } else {
+            let bBase = rand(-4, 4);
+            let cBase = Math.ceil((bBase*bBase + 4)/4) + rand(1, 4);
+            return { type: 'quad', a, b: a*bBase, c: a*cBase, isDenom };
+        }
+    }
+
+    function generateBiquadratic() {
+        let a = Math.random() > 0.5 ? -1 : 1;
+        const possibleT = [-4, -1, 0, 1, 4, 9];
+        let t1 = possibleT[rand(0, 5)], t2 = possibleT[rand(0, 5)];
+        return { type: 'biquad', a, b: -a*(t1+t2), c: a*t1*t2, t1, t2 };
+    }
+
+    function getFactorTex(f) {
+        if (f.type === 'lin') {
+            let base = '';
+            if (f.a === 1) {
+                const sign = f.root === 0 ? '' : (f.root > 0 ? '-' : '+');
+                const val = f.root === 0 ? '' : Math.abs(f.root);
+                base = f.root === 0 ? 'x' : `(x ${sign} ${val})`;
+            } else {
+                if (f.root === 0) base = '(-x)';
+                else if (f.root > 0) base = `(${f.root} - x)`;
+                else base = `(-x - ${Math.abs(f.root)})`;
+            }
+            return f.power > 1 ? `${base}^{${f.power}}` : base;
+        } else if (f.type === 'quad' || f.type === 'quadRoots') {
+            return `(${getPolyTex(f.a, f.b, f.c)})`;
+        } else if (f.type === 'biquad') {
+            let terms = [];
+            terms.push(f.a === 1 ? 'x^4' : '-x^4');
+            if (f.b !== 0) {
+                const bSign = f.b > 0 ? '+' : '-';
+                const bVal = Math.abs(f.b) === 1 ? 'x^2' : Math.abs(f.b) + 'x^2';
+                terms.push(`${bSign} ${bVal}`);
+            }
+            if (f.c !== 0) terms.push(`${f.c > 0 ? '+' : '-'} ${Math.abs(f.c)}`);
+            return `(${terms.join(' ')})`;
+        }
+    }
+
+    function getPolyTex(a, b, c) {
+        let terms = [];
+        if (a !== 0) {
+            if (a === 1) terms.push('x^2');
+            else if (a === -1) terms.push('-x^2');
+            else terms.push(`${a}x^2`);
+        }
+        if (b !== 0) {
+            let absB = Math.abs(b);
+            let bStr = absB === 1 ? 'x' : `${absB}x`;
+            if (terms.length === 0) terms.push(b < 0 ? `-${bStr}` : bStr);
+            else terms.push(b < 0 ? `- ${bStr}` : `+ ${bStr}`);
+        }
+        if (c !== 0) {
+            let absC = Math.abs(c);
+            if (terms.length === 0) terms.push(c < 0 ? `-${absC}` : `${absC}`);
+            else terms.push(c < 0 ? `- ${absC}` : `+ ${absC}`);
+        }
+        if (terms.length === 0) return '0';
+        return terms.join(' ');
+    }
+
+    // --- ГЕНЕРАТОРИ И РЕШАВАНЕ ЗА 3-ТЕ ТИПА ---
+
+    // 1. Стандартен
+    function solveStandard(p) {
+        let rootsMap = {};
+        const addRoot = (r, isD) => {
+            if (rootsMap[r] === undefined) rootsMap[r] = isD;
+            else if (isD) rootsMap[r] = true;
+        };
+
+        [...p.num, ...p.den].forEach(f => {
+            if (f.type === 'lin') addRoot(f.root, f.isDenom);
+            else if (f.type === 'quadRoots') f.roots.forEach(r => addRoot(r, f.isDenom));
+            else if (f.type === 'biquad') {
+                const processT = (t) => {
+                    if (t > 0) { addRoot(Math.sqrt(t), false); addRoot(-Math.sqrt(t), false); }
+                    else if (t === 0) addRoot(0, false);
+                };
+                processT(f.t1); processT(f.t2);
+            }
+        });
+
+        const checkSign = (x) => {
+            let resSign = 1;
+            [...p.num, ...p.den].forEach(f => {
+                let val = 0;
+                if (f.type === 'lin') val = f.a * (x - f.root);
+                else if (f.type === 'biquad') val = f.a*Math.pow(x,4) + f.b*Math.pow(x,2) + f.c;
+                else val = f.a*x*x + f.b*x + f.c;
+
+                if (Math.abs(val) < 1e-9) resSign = 0;
+                else if (val > 0) resSign *= 1;
+                else resSign *= ((f.power || 1) % 2 === 0 ? 1 : -1);
+            });
+            return resSign;
+        };
+
+        const testFn = (x) => {
+            let valSign = checkSign(x);
+            if (p.sign === '>') return valSign > 0;
+            if (p.sign === '<') return valSign < 0;
+            if (p.sign === '\\ge') return valSign >= 0;
+            if (p.sign === '\\le') return valSign <= 0;
+            return false;
+        };
+
+        const isBoundValid = (x) => {
+            if (rootsMap[x]) return false; // Is denominator root
+            return testFn(x);
+        };
+
+        return evaluateIntervals(Object.keys(rootsMap).map(Number), testFn, isBoundValid);
+    }
+
+    // 2. Дробно с число (N(x)/D(x) <= C)
+    function generateFractionalRHSProblem() {
+        let r1 = rand(-4, 4), r2 = rand(-4, 4);
+        while(r2 === r1) r2 = rand(-4, 4);
+
+        let a_d = 1, b_d = -(r1 + r2), c_d = r1 * r2;
+        let C = [-2, -1, 1, 2][rand(0, 3)];
+        
+        let A = [-3, -2, -1, 1, 2, 3][rand(0, 5)];
+        let r3 = rand(-5, 5);
+
+        // N(x) = C*D(x) + A(x - r3) -> Ensures beautiful cancellation
+        let a_n = C * a_d;
+        let b_n = C * b_d + A;
+        let c_n = C * c_d - A * r3;
+
+        let sign = ['>', '<', '\\ge', '\\le'][rand(0, 3)];
+        let displayTex = `\\frac{${getPolyTex(a_n, b_n, c_n)}}{${getPolyTex(a_d, b_d, c_d)}} ${sign} ${C}`;
+
+        return { type: 'fractional_rhs', displayTex, sign, C, a_n, b_n, c_n, a_d, b_d, c_d, roots: [r1, r2, r3], complexity: 8 };
+    }
+
+    function solveFractionalRHS(p) {
+        const evaluateVal = (x) => {
+            let d = p.a_d * x * x + p.b_d * x + p.c_d;
+            if (Math.abs(d) < 1e-9) return { isDenom: true };
+            let n = p.a_n * x * x + p.b_n * x + p.c_n;
+            let val = (n / d) - p.C;
+            if (Math.abs(val) < 1e-9) val = 0;
+            return { isDenom: false, val };
+        };
+
+        const checkCondition = (res) => {
+            if (res.isDenom) return false;
+            if (p.sign === '>') return res.val > 0;
+            if (p.sign === '<') return res.val < 0;
+            if (p.sign === '\\ge') return res.val >= 0;
+            if (p.sign === '\\le') return res.val <= 0;
+        };
+
+        return evaluateIntervals(p.roots, (x) => checkCondition(evaluateVal(x)), (x) => checkCondition(evaluateVal(x)));
+    }
+
+    // 3. Система линейни
+    function generateSystemLinearProblem() {
+        let sysSize = Math.random() > 0.7 ? 3 : 2;
+        let ineqs = [];
+        let signs = ['>', '<', '\\ge', '\\le'];
+
+        for(let i=0; i<sysSize; i++) {
+            let a = [-3, -2, -1, 1, 2, 3][rand(0, 5)];
+            let r = rand(-5, 5);
+            ineqs.push({ a, b: -a * r, sign: signs[rand(0, 3)], root: r });
+        }
+
+        let texLines = ineqs.map(eq => {
+            let terms = [];
+            if (eq.a === 1) terms.push('x');
+            else if (eq.a === -1) terms.push('-x');
+            else terms.push(`${eq.a}x`);
+            
+            if (eq.b !== 0) terms.push(`${eq.b > 0 ? '+' : '-'} ${Math.abs(eq.b)}`);
+            return `${terms.join(' ') || '0'} ${eq.sign} 0`;
+        });
+
+        return {
+            type: 'system_linear',
+            displayTex: `\\begin{cases} ${texLines.join(' \\\\ ')} \\end{cases}`,
+            ineqs, roots: ineqs.map(i => i.root), complexity: 5 + sysSize * 2
+        };
+    }
+
+    function solveSystemLinear(p) {
+        const checkIneq = (x, eq) => {
+            let val = eq.a * x + eq.b;
+            if (Math.abs(val) < 1e-9) val = 0;
+            if (eq.sign === '>') return val > 0;
+            if (eq.sign === '<') return val < 0;
+            if (eq.sign === '\\ge') return val >= 0;
+            if (eq.sign === '\\le') return val <= 0;
+        };
+        const testFn = (x) => p.ineqs.every(eq => checkIneq(x, eq));
+        return evaluateIntervals(p.roots, testFn, testFn);
+    }
+
+    // --- ГЛАВНА ФУНКЦИЯ ЗА ГЕНЕРИРАНЕ ---
     function generate() {
         if (taskGroups.length === 0) return alert('Моля, добавете поне една група със задачи!');
         
@@ -415,9 +511,7 @@
         const docSubtitle = document.getElementById('g-subtitle').value || '';
         
         const btn = document.getElementById('btn-download');
-        btn.disabled = true;
-        btn.innerHTML = '⏳ 2. Изчертаване...';
-        btn.style.background = '#94a3b8';
+        btn.disabled = true; btn.innerHTML = '⏳ 2. Изчертаване...'; btn.style.background = '#94a3b8';
 
         const variants = parseInt(document.getElementById('v-count').value) || 1;
         const output = document.getElementById('output');
@@ -444,61 +538,61 @@
             let problems = [];
             taskGroups.forEach(group => {
                 for (let i = 0; i < group.count; i++) {
-                    let num = generateUniqueFactors(group.lin, false, group.hasPowers);
-                    for(let j=0; j<group.quadNum; j++) num.push(generateQuadratic(false));
-                    for(let j=0; j<group.bi; j++) num.push(generateBiquadratic());
-                    
-                    let den = generateUniqueFactors(group.denom, true, group.hasPowers);
-                    for(let j=0; j<group.quadDenom; j++) den.push(generateQuadratic(true));
-                    
-                    if (num.length === 0 && den.length === 0) num.push({type:'lin', root: rand(-3,3), power:1, isDenom:false, a:1});
-
-                    const sign = ['>', '<', '\\ge', '\\le'][rand(0, 3)];
-                    problems.push({ 
-                        num, den, sign, 
-                        complexity: (group.lin + group.quadNum*1.5 + group.quadDenom*1.5 + group.bi*3 + group.denom*1.2) 
-                    });
+                    if (group.type === 'standard') {
+                        let num = generateUniqueFactors(group.lin, false, group.hasPowers);
+                        for(let j=0; j<group.quadNum; j++) num.push(generateQuadratic(false));
+                        for(let j=0; j<group.bi; j++) num.push(generateBiquadratic());
+                        
+                        let den = generateUniqueFactors(group.denom, true, group.hasPowers);
+                        for(let j=0; j<group.quadDenom; j++) den.push(generateQuadratic(true));
+                        
+                        if (num.length === 0 && den.length === 0) num.push({type:'lin', root: rand(-3,3), power:1, isDenom:false, a:1});
+                        let sign = ['>', '<', '\\ge', '\\le'][rand(0, 3)];
+                        
+                        let numTex = num.map(getFactorTex).join('');
+                        let denTex = den.map(getFactorTex).join('');
+                        let displayTex = numTex;
+                        if (den.length > 0) displayTex = numTex === '' ? `\\frac{1}{${denTex}}` : `\\frac{${numTex}}{${denTex}}`;
+                        if (displayTex === '') displayTex = '1';
+                        
+                        problems.push({ type: 'standard', num, den, sign, displayTex: `${displayTex} ${sign} 0`, complexity: (group.lin + group.quadNum*1.5 + group.quadDenom*1.5 + group.bi*3 + group.denom*1.2) });
+                    } else if (group.type === 'fractional_rhs') {
+                        problems.push(generateFractionalRHSProblem());
+                    } else if (group.type === 'system_linear') {
+                        problems.push(generateSystemLinearProblem());
+                    }
                 }
             });
 
             let totalComp = Math.max(1, problems.reduce((s, p) => s + p.complexity, 0));
             let runningSum = 0;
             problems.forEach((p, idx) => {
-                if (idx === problems.length - 1) {
-                    p.pts = 40 - runningSum;
-                } else { 
-                    p.pts = Math.round((p.complexity / totalComp) * 40) || 1; 
-                    runningSum += p.pts; 
-                }
+                if (idx === problems.length - 1) p.pts = 40 - runningSum;
+                else { p.pts = Math.round((p.complexity / totalComp) * 40) || 1; runningSum += p.pts; }
             });
 
             problems.forEach((p, i) => {
-                const numTex = p.num.map(getFactorTex).join('');
-                const denTex = p.den.map(getFactorTex).join('');
-                let displayTex = numTex;
-                if (p.den.length > 0) {
-                    displayTex = numTex === '' ? `\\frac{1}{${denTex}}` : `\\frac{${numTex}}{${denTex}}`;
-                }
+                if (p.type === 'standard') p.finalAns = solveStandard(p);
+                else if (p.type === 'fractional_rhs') p.finalAns = solveFractionalRHS(p);
+                else if (p.type === 'system_linear') p.finalAns = solveSystemLinear(p);
 
                 let pointsHtml = showPoints ? `<span class="problem-points">${p.pts} точки</span>` : '';
-
+                let titleStr = p.type === 'system_linear' ? 'Решете системата:' : 'Решете неравенството:';
+                
                 html += `
                     <div class="problem">
                         <div class="problem-header">
-                            <span>Задача ${i+1}. Решете неравенството:</span>
+                            <span>Задача ${i+1}. ${titleStr}</span>
                             ${pointsHtml}
                         </div>
                         <div class="problem-body">
-                            \\[ ${displayTex} ${p.sign} 0 \\]
+                            \\[ ${p.displayTex} \\]
                         </div>
                     </div>
                 `;
-                p.finalAns = solveInequality(p.num, p.den, p.sign);
             });
 
-            if (showPoints) {
-                html += `<div style="text-align:right; font-weight:bold; font-size: 1.2rem; margin-top: 30px;">Общо: 40 точки</div>`;
-            }
+            if (showPoints) html += `<div style="text-align:right; font-weight:bold; font-size: 1.2rem; margin-top: 30px;">Общо: 40 точки</div>`;
             
             page.innerHTML = html;
             output.appendChild(page);
@@ -583,7 +677,7 @@
         URL.revokeObjectURL(url);
     }
 
-    window.onload = () => { renderConfig(); generate(); };
+    window.onload = () => { toggleTaskOptions(); renderConfig(); generate(); };
 </script>
 
 </body>
