@@ -127,6 +127,11 @@
                     <input type="number" id="g-count" value="1" min="1" max="10" style="border-color: #7dd3fc;">
                 </div>
 
+                <div class="control-group">
+                    <label style="color: #0369a1;">Точки/зад.:</label>
+                    <input type="number" id="g-points" value="10" min="1" max="100" style="border-color: #7dd3fc; width: 80px;">
+                </div>
+
                 <!-- Опции само за стандартен метод -->
                 <div id="opt-standard" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-left: 10px; border-left: 2px solid #bae6fd; padding-left: 15px;">
                     <div class="control-group"><label>Лин. (ч.)</label><input type="number" id="g-lin" value="2" min="0" max="6"></div>
@@ -161,9 +166,9 @@
 
 <script>
     let taskGroups = [
-        { type: 'standard', count: 1, lin: 2, quadNum: 0, quadDenom: 0, bi: 0, denom: 1, hasPowers: false }, 
-        { type: 'fractional_rhs', count: 1 },
-        { type: 'system_linear', count: 1 }
+        { type: 'standard', count: 1, points: 10, lin: 2, quadNum: 0, quadDenom: 0, bi: 0, denom: 1, hasPowers: false }, 
+        { type: 'fractional_rhs', count: 1, points: 15 },
+        { type: 'system_linear', count: 1, points: 15 }
     ];
 
     function toggleTaskOptions() {
@@ -174,6 +179,7 @@
     function addGroup() {
         let type = document.getElementById('g-task-type').value;
         let count = parseInt(document.getElementById('g-count').value) || 1;
+        let points = parseInt(document.getElementById('g-points').value) || 10;
         
         if (type === 'standard') {
             let lin = parseInt(document.getElementById('g-lin').value) || 0;
@@ -185,9 +191,9 @@
             
             if (lin === 0 && quadNum === 0 && quadDenom === 0 && denom === 0 && bi === 0) lin = 2;
 
-            taskGroups.push({ type, count, lin, quadNum, quadDenom, bi, denom, hasPowers });
+            taskGroups.push({ type, count, points, lin, quadNum, quadDenom, bi, denom, hasPowers });
         } else {
-            taskGroups.push({ type, count });
+            taskGroups.push({ type, count, points });
         }
         renderConfig();
     }
@@ -219,7 +225,7 @@
             return `
             <tr>
                 <td><b style="font-size:1.1rem">${g.count}</b> бр.</td>
-                <td>${desc}</td>
+                <td>${desc} <br><span style="color:#64748b; font-size: 0.85rem;">(по ${g.points} точки на задача)</span></td>
                 <td><button class="btn btn-red" onclick="removeGroup(${i})">Изтрий</button></td>
             </tr>
             `;
@@ -592,21 +598,20 @@
                         if (den.length > 0) displayTex = numTex === '' ? `\\frac{1}{${denTex}}` : `\\frac{${numTex}}{${denTex}}`;
                         if (displayTex === '') displayTex = '1';
                         
-                        problems.push({ type: 'standard', num, den, sign, displayTex: `${displayTex} ${sign} 0`, complexity: (group.lin + group.quadNum*1.5 + group.quadDenom*1.5 + group.bi*3 + group.denom*1.2) });
+                        problems.push({ type: 'standard', num, den, sign, displayTex: `${displayTex} ${sign} 0`, pts: group.points });
                     } else if (group.type === 'fractional_rhs') {
-                        problems.push(generateFractionalRHSProblem());
+                        let p = generateFractionalRHSProblem();
+                        p.pts = group.points;
+                        problems.push(p);
                     } else if (group.type === 'system_linear') {
-                        problems.push(generateSystemLinearProblem());
+                        let p = generateSystemLinearProblem();
+                        p.pts = group.points;
+                        problems.push(p);
                     }
                 }
             });
 
-            let totalComp = Math.max(1, problems.reduce((s, p) => s + p.complexity, 0));
-            let runningSum = 0;
-            problems.forEach((p, idx) => {
-                if (idx === problems.length - 1) p.pts = 40 - runningSum;
-                else { p.pts = Math.round((p.complexity / totalComp) * 40) || 1; runningSum += p.pts; }
-            });
+            let totalPoints = problems.reduce((sum, p) => sum + p.pts, 0);
 
             problems.forEach((p, i) => {
                 if (p.type === 'standard') p.finalAns = solveStandard(p);
@@ -629,7 +634,7 @@
                 `;
             });
 
-            if (showPoints) html += `<div style="text-align:right; font-weight:bold; font-size: 1.2rem; margin-top: 30px;">Общо: 40 точки</div>`;
+            if (showPoints) html += `<div style="text-align:right; font-weight:bold; font-size: 1.2rem; margin-top: 30px;">Общо: ${totalPoints} точки</div>`;
             
             page.innerHTML = html;
             output.appendChild(page);
