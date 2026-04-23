@@ -312,11 +312,14 @@
         return factors;
     }
 
-    function generateQuadratic(isDenom) {
+    function generateQuadratic(isDenom, forceRoot = null) {
         let a = Math.random() > 0.5 ? -1 : 1;
-        let hasRoots = Math.random() > 0.5; 
+        // Ако имаме forceRoot, задължително правим квадратен тричлен с корени
+        let hasRoots = (forceRoot !== null) ? true : (Math.random() > 0.5); 
+        
         if (hasRoots) {
-            let r1 = rand(-6, 6), r2 = rand(-6, 6);
+            let r1 = (forceRoot !== null) ? forceRoot : rand(-6, 6);
+            let r2 = rand(-6, 6);
             return { type: 'quadRoots', a, b: -a*(r1+r2), c: a*r1*r2, roots: [r1, r2], isDenom };
         } else {
             let bBase = rand(-4, 4);
@@ -327,8 +330,13 @@
 
     function generateBiquadratic() {
         let a = Math.random() > 0.5 ? -1 : 1;
-        const possibleT = [-4, -1, 0, 1, 4, 9];
-        let t1 = possibleT[rand(0, 5)], t2 = possibleT[rand(0, 5)];
+        const possibleT = [-4, -1, 1, 4, 9]; // Без 0, за да имаме свободен член винаги
+        let t1, t2;
+        do {
+            t1 = possibleT[rand(0, 4)];
+            t2 = possibleT[rand(0, 4)];
+        } while (t1 + t2 === 0); // Избягваме липсващ x^2 (b = 0)
+        
         return { type: 'biquad', a, b: -a*(t1+t2), c: a*t1*t2, t1, t2 };
     }
 
@@ -596,11 +604,23 @@
                 for (let i = 0; i < group.count; i++) {
                     if (group.type === 'standard') {
                         let num = generateUniqueFactors(group.lin, false, group.hasPowers);
-                        for(let j=0; j<group.quadNum; j++) num.push(generateQuadratic(false));
+                        let den = generateUniqueFactors(group.denom, true, group.hasPowers);
+                        
+                        // Събираме всички вече генерирани корени от линейните множители
+                        let allLinRoots = [...num, ...den].map(f => f.root);
+                        
+                        const getSharedRoot = () => {
+                            // 80% шанс да използваме съществуващ линеен корен за квадратния тричлен
+                            if (allLinRoots.length > 0 && Math.random() > 0.2) {
+                                return allLinRoots[rand(0, allLinRoots.length - 1)];
+                            }
+                            return null;
+                        };
+
+                        for(let j=0; j<group.quadNum; j++) num.push(generateQuadratic(false, getSharedRoot()));
                         for(let j=0; j<group.bi; j++) num.push(generateBiquadratic());
                         
-                        let den = generateUniqueFactors(group.denom, true, group.hasPowers);
-                        for(let j=0; j<group.quadDenom; j++) den.push(generateQuadratic(true));
+                        for(let j=0; j<group.quadDenom; j++) den.push(generateQuadratic(true, getSharedRoot()));
                         
                         if (num.length === 0 && den.length === 0) num.push({type:'lin', root: rand(-3,3), power:1, isDenom:false, a:1});
                         let sign = ['>', '<', '\\ge', '\\le'][rand(0, 3)];
