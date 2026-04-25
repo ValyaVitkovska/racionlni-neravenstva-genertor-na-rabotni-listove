@@ -74,20 +74,7 @@
             body { background: white; margin: 0; }
             .no-print-zone { display: none !important; }
             .preview-container { padding: 0 !important; gap: 0 !important; }
-            .page { width: 100% !important; min-height: auto !important; margin: 0 !important; padding: 10mm !important; box-shadow: none !important; border: none !important; page-break-after: always; }
-            
-            /* Намален размер на шрифта при принтиране */
-            .page-header h1 { font-size: 1.4rem !important; }
-            .page-header div { font-size: 0.9rem !important; }
-            .page-header b { font-size: 1.1rem !important; }
-            .page-header span { font-size: 0.9rem !important; }
-            
-            .problem { margin-bottom: 25px !important; }
-            .problem-header { font-size: 0.95rem !important; }
-            .problem-points { font-size: 0.85rem !important; }
-            .problem-body { font-size: 1.2rem !important; margin: 15px 0 !important; }
-            
-            .answer-item { font-size: 1rem !important; }
+            .page { width: 100% !important; min-height: auto !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: none !important; page-break-after: always; }
         }
     </style>
 </head>
@@ -132,6 +119,7 @@
                         <option value="standard">1. Метод на интервалите (стандартен)</option>
                         <option value="fractional_rhs">2. Дробни с число отдясно (напр. ≤ 1)</option>
                         <option value="system_linear">3. Системи линейни неравенства</option>
+                        <option value="trap">4. Дробни с уловка (съкращаващи се или повтарящи се)</option>
                     </select>
                 </div>
                 
@@ -233,6 +221,8 @@
                 desc = `<b style="color:#d97706">Дробно с число:</b> Уравнения от вида $\\frac{ax^2+bx+c}{dx^2+ex+f} \\le C$`;
             } else if (g.type === 'system_linear') {
                 desc = `<b style="color:#059669">Система:</b> Система от 2 линейни неравенства`;
+            } else if (g.type === 'trap') {
+                desc = `<b style="color:#e11d48">С уловка:</b> Съдържа съкращаващи се или повтарящи се множители. Изисква ДС и внимание към кратността.`;
             }
 
             return `
@@ -276,18 +266,53 @@
         });
 
         let segments = [];
+        let inSegment = false;
+        let startVal = null;
+        let startBracket = '(';
+        
         for (let i = 0; i < testPoints.length; i++) {
             let tp = testPoints[i];
-            if (tp.type === 'interval' && tp.valid) {
-                let leftBracket = (i > 0 && testPoints[i-1].valid) ? '[' : '(';
-                let rightBracket = (i < testPoints.length - 1 && testPoints[i+1].valid) ? ']' : ')';
-                let startStr = tp.start === -Infinity ? '-\\infty' : tp.start;
-                let endStr = tp.end === Infinity ? '+\\infty' : tp.end;
-                segments.push(`${leftBracket}${startStr}; ${endStr}${rightBracket}`);
-            } else if (tp.type === 'point' && tp.valid) {
-                let prevValid = i > 0 && testPoints[i-1].valid;
-                let nextValid = i < testPoints.length - 1 && testPoints[i+1].valid;
-                if (!prevValid && !nextValid) segments.push(`\\{${tp.val}\\}`);
+            
+            if (tp.valid) {
+                if (!inSegment) {
+                    inSegment = true;
+                    if (tp.type === 'interval') {
+                        startVal = tp.start === -Infinity ? '-\\infty' : tp.start;
+                        startBracket = '(';
+                    } else {
+                        startVal = tp.val;
+                        startBracket = '[';
+                    }
+                }
+            } else {
+                if (inSegment) {
+                    inSegment = false;
+                    let prevTp = testPoints[i-1];
+                    if (prevTp.type === 'interval') {
+                        let endVal = prevTp.end === Infinity ? '+\\infty' : prevTp.end;
+                        segments.push(`${startBracket}${startVal}; ${endVal})`);
+                    } else {
+                        if (startVal === prevTp.val && startBracket === '[') {
+                            segments.push(`\\{${prevTp.val}\\}`);
+                        } else {
+                            segments.push(`${startBracket}${startVal}; ${prevTp.val}]`);
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (inSegment) {
+            let lastTp = testPoints[testPoints.length - 1];
+            if (lastTp.type === 'interval') {
+                let endVal = lastTp.end === Infinity ? '+\\infty' : lastTp.end;
+                segments.push(`${startBracket}${startVal}; ${endVal})`);
+            } else {
+                if (startVal === lastTp.val && startBracket === '[') {
+                    segments.push(`\\{${lastTp.val}\\}`);
+                } else {
+                    segments.push(`${startBracket}${startVal}; ${lastTp.val}]`);
+                }
             }
         }
 
@@ -312,14 +337,11 @@
         return factors;
     }
 
-    function generateQuadratic(isDenom, forceRoot = null) {
+    function generateQuadratic(isDenom) {
         let a = Math.random() > 0.5 ? -1 : 1;
-        // Ако имаме forceRoot, задължително правим квадратен тричлен с корени
-        let hasRoots = (forceRoot !== null) ? true : (Math.random() > 0.5); 
-        
+        let hasRoots = Math.random() > 0.5; 
         if (hasRoots) {
-            let r1 = (forceRoot !== null) ? forceRoot : rand(-6, 6);
-            let r2 = rand(-6, 6);
+            let r1 = rand(-6, 6), r2 = rand(-6, 6);
             return { type: 'quadRoots', a, b: -a*(r1+r2), c: a*r1*r2, roots: [r1, r2], isDenom };
         } else {
             let bBase = rand(-4, 4);
@@ -330,13 +352,8 @@
 
     function generateBiquadratic() {
         let a = Math.random() > 0.5 ? -1 : 1;
-        const possibleT = [-4, -1, 1, 4, 9]; // Без 0, за да имаме свободен член винаги
-        let t1, t2;
-        do {
-            t1 = possibleT[rand(0, 4)];
-            t2 = possibleT[rand(0, 4)];
-        } while (t1 + t2 === 0); // Избягваме липсващ x^2 (b = 0)
-        
+        const possibleT = [-4, -1, 0, 1, 4, 9];
+        let t1 = possibleT[rand(0, 5)], t2 = possibleT[rand(0, 5)];
         return { type: 'biquad', a, b: -a*(t1+t2), c: a*t1*t2, t1, t2 };
     }
 
@@ -390,7 +407,69 @@
         return terms.join(' ');
     }
 
-    // --- ГЕНЕРАТОРИ И РЕШАВАНЕ ЗА 3-ТЕ ТИПА ---
+    // --- ГЕНЕРАТОРИ И РЕШАВАНЕ ЗА 4-ТЕ ТИПА ---
+    
+    // 4. Дробни с уловка
+    function generateTrapProblem() {
+        let trapType = Math.random() > 0.5 ? 'cancel' : 'repeat';
+        let sign = ['\\le', '\\ge'][rand(0, 1)];
+        
+        let a1 = rand(0, 1) ? 1 : -1;
+        let a2 = rand(0, 1) ? 1 : -1;
+        let a3 = rand(0, 1) ? 1 : -1;
+
+        let numRoots = [];
+        let denRoots = [];
+        let displayTex = "";
+
+        let uniqueRoots = new Set();
+        while(uniqueRoots.size < 6) uniqueRoots.add(rand(-6, 6));
+        let uRoots = Array.from(uniqueRoots);
+
+        if (trapType === 'cancel') {
+            // Съкращаващи се: Числ. (x-r1)(x-r2) * (x-t1)(x-t2) / Знам. (x-t1)(x-t2)
+            let r1 = uRoots[0], r2 = uRoots[1];
+            let t1 = uRoots[2], t2 = uRoots[3];
+            
+            let b1 = -a1*(r1+r2), c1 = a1*r1*r2;
+            let b2 = -a2*(t1+t2), c2 = a2*t1*t2;
+            let b3 = -a3*(t1+t2), c3 = a3*t1*t2;
+            
+            displayTex = `\\frac{(${getPolyTex(a1, b1, c1)})(${getPolyTex(a2, b2, c2)})}{${getPolyTex(a3, b3, c3)}} ${sign} 0`;
+            
+            numRoots.push({ type: 'lin', root: r1, a: a1, power: 1, isDenom: false });
+            numRoots.push({ type: 'lin', root: r2, a: 1, power: 1, isDenom: false });
+            numRoots.push({ type: 'lin', root: t1, a: a2, power: 1, isDenom: false });
+            numRoots.push({ type: 'lin', root: t2, a: 1, power: 1, isDenom: false });
+            
+            denRoots.push({ type: 'lin', root: t1, a: a3, power: 1, isDenom: true });
+            denRoots.push({ type: 'lin', root: t2, a: 1, power: 1, isDenom: true });
+            
+        } else {
+            // Повтарящи се: Числ. (x-r1)(x-r2) * (x-r1)(x-r3) / Знам. (x-r4)(x-r5) -> r1 се повтаря (четна кратност)
+            let r1 = uRoots[0]; // Повтарящ се корен
+            let r2 = uRoots[1];
+            let r3 = uRoots[2];
+            let r4 = uRoots[3];
+            let r5 = uRoots[4];
+
+            let b1 = -a1*(r1+r2), c1 = a1*r1*r2;
+            let b2 = -a2*(r1+r3), c2 = a2*r1*r3;
+            let b3 = -a3*(r4+r5), c3 = a3*r4*r5;
+            
+            displayTex = `\\frac{(${getPolyTex(a1, b1, c1)})(${getPolyTex(a2, b2, c2)})}{${getPolyTex(a3, b3, c3)}} ${sign} 0`;
+            
+            numRoots.push({ type: 'lin', root: r1, a: a1, power: 1, isDenom: false });
+            numRoots.push({ type: 'lin', root: r2, a: 1, power: 1, isDenom: false });
+            numRoots.push({ type: 'lin', root: r1, a: a2, power: 1, isDenom: false });
+            numRoots.push({ type: 'lin', root: r3, a: 1, power: 1, isDenom: false });
+            
+            denRoots.push({ type: 'lin', root: r4, a: a3, power: 1, isDenom: true });
+            denRoots.push({ type: 'lin', root: r5, a: 1, power: 1, isDenom: true });
+        }
+        
+        return { type: 'trap', displayTex, sign, num: numRoots, den: denRoots, pts: 10 };
+    }
 
     // 1. Стандартен
     function solveStandard(p) {
@@ -604,23 +683,11 @@
                 for (let i = 0; i < group.count; i++) {
                     if (group.type === 'standard') {
                         let num = generateUniqueFactors(group.lin, false, group.hasPowers);
-                        let den = generateUniqueFactors(group.denom, true, group.hasPowers);
-                        
-                        // Събираме всички вече генерирани корени от линейните множители
-                        let allLinRoots = [...num, ...den].map(f => f.root);
-                        
-                        const getSharedRoot = () => {
-                            // 80% шанс да използваме съществуващ линеен корен за квадратния тричлен
-                            if (allLinRoots.length > 0 && Math.random() > 0.2) {
-                                return allLinRoots[rand(0, allLinRoots.length - 1)];
-                            }
-                            return null;
-                        };
-
-                        for(let j=0; j<group.quadNum; j++) num.push(generateQuadratic(false, getSharedRoot()));
+                        for(let j=0; j<group.quadNum; j++) num.push(generateQuadratic(false));
                         for(let j=0; j<group.bi; j++) num.push(generateBiquadratic());
                         
-                        for(let j=0; j<group.quadDenom; j++) den.push(generateQuadratic(true, getSharedRoot()));
+                        let den = generateUniqueFactors(group.denom, true, group.hasPowers);
+                        for(let j=0; j<group.quadDenom; j++) den.push(generateQuadratic(true));
                         
                         if (num.length === 0 && den.length === 0) num.push({type:'lin', root: rand(-3,3), power:1, isDenom:false, a:1});
                         let sign = ['>', '<', '\\ge', '\\le'][rand(0, 3)];
@@ -640,6 +707,10 @@
                         let p = generateSystemLinearProblem();
                         p.pts = group.points;
                         problems.push(p);
+                    } else if (group.type === 'trap') {
+                        let p = generateTrapProblem();
+                        p.pts = group.points;
+                        problems.push(p);
                     }
                 }
             });
@@ -647,7 +718,7 @@
             let totalPoints = problems.reduce((sum, p) => sum + p.pts, 0);
 
             problems.forEach((p, i) => {
-                if (p.type === 'standard') p.finalAns = solveStandard(p);
+                if (p.type === 'standard' || p.type === 'trap') p.finalAns = solveStandard(p);
                 else if (p.type === 'fractional_rhs') p.finalAns = solveFractionalRHS(p);
                 else if (p.type === 'system_linear') p.finalAns = solveSystemLinear(p);
 
@@ -727,19 +798,6 @@
             .print-btn-zone { display: none !important; }
             body { margin: 0; padding: 0; }
             .page { width: 100%; margin: 0; padding: 10mm; box-shadow: none; border: none; page-break-after: always; }
-            
-            /* Намален размер на шрифта при принтиране */
-            .page-header h1 { font-size: 1.4rem !important; }
-            .page-header div { font-size: 0.9rem !important; }
-            .page-header b { font-size: 1.1rem !important; }
-            .page-header span { font-size: 0.9rem !important; }
-            
-            .problem { margin-bottom: 25px !important; }
-            .problem-header { font-size: 0.95rem !important; }
-            .problem-points { font-size: 0.85rem !important; }
-            .problem-body { font-size: 1.2rem !important; margin: 15px 0 !important; }
-            
-            .answer-item { font-size: 1rem !important; }
         }
     </style>
     ${styleStr}
