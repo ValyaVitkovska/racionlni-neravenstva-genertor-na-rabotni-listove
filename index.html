@@ -106,6 +106,11 @@
                 </div>
                 <div class="control-group" style="justify-content: flex-end; padding-bottom: 8px;">
                     <label style="display:flex; align-items:center; gap:5px; cursor:pointer; margin:0; font-weight:bold; font-size:0.85rem; color:#475569;">
+                        <input type="checkbox" id="g-balance-signs" checked> 50/50 строги/нестроги
+                    </label>
+                </div>
+                <div class="control-group" style="justify-content: flex-end; padding-bottom: 8px;">
+                    <label style="display:flex; align-items:center; gap:5px; cursor:pointer; margin:0; font-weight:bold; font-size:0.85rem; color:#475569;">
                         <input type="checkbox" id="g-show-points" checked> С точки
                     </label>
                 </div>
@@ -170,7 +175,7 @@
         { type: 'standard', count: 1, points: 10, lin: 2, quadNum: 0, quadDenom: 0, bi: 0, denom: 1, hasPowers: false }, 
         { type: 'fractional_rhs', count: 1, points: 15 },
         { type: 'system_linear', count: 1, points: 15 },
-        { type: 'trap', count: 2, points: 15 } // Добавяме и две задачи с уловки по подразбиране
+        { type: 'trap', count: 2, points: 15 } 
     ];
 
     function toggleTaskOptions() {
@@ -410,15 +415,13 @@
     // --- ГЕНЕРАТОРИ И РЕШАВАНЕ ЗА 4-ТЕ ТИПА ---
     
     // 4. Дробни с уловка (Един линеен, два квадратни - умножени или съкращаващи се)
-    function generateTrapProblem() {
+    function generateTrapProblem(forcedSign) {
         let trapType = rand(0, 3); // 0: Повтаря се в Числ, 1: Съкращава Числ-Знам, 2: Съкращава Знам-Числ, 3: Повтаря се в Знам
-        let sign = ['>', '<', '\\ge', '\\le'][rand(0, 3)];
+        let sign = forcedSign || ['>', '<', '\\ge', '\\le'][rand(0, 3)];
         
         let a1, a2, a3, r1, r2, r3, r4;
         let isGoodTrap = false;
 
-        // Този цикъл избира корените и гарантира, че съкращаващият се корен 
-        // се пада ВЪТРЕ в решенията, така че уловката да проработи безупречно!
         while (!isGoodTrap) {
             a1 = rand(0, 1) ? 1 : -1;
             a2 = rand(0, 1) ? 1 : -1;
@@ -430,9 +433,8 @@
             r1 = uRoots[0]; r2 = uRoots[1]; r3 = uRoots[2]; r4 = uRoots[3];
             
             if (trapType === 0 || trapType === 3) {
-                isGoodTrap = true; // Повтарящите се корени (четна кратност) винаги объркват "змийчето"
+                isGoodTrap = true; 
             } else if (trapType === 1) {
-                // Съкращаване (Линеен в числител, съкращава с корен в знаменател)
                 let val = (a1 * a2 / a3) * (r3 - r1) * (r3 - r2) / (r3 - r4);
                 if (sign === '>' || sign === '\\ge') {
                     if (val > 0) isGoodTrap = true;
@@ -440,7 +442,6 @@
                     if (val < 0) isGoodTrap = true;
                 }
             } else if (trapType === 2) {
-                // Съкращаване (Линеен в знаменател, съкращава с корен в числител)
                 let val = (a2 / (a1 * a3)) * (r1 - r2) / ((r1 - r3) * (r1 - r4));
                 if (sign === '>' || sign === '\\ge') {
                     if (val > 0) isGoodTrap = true;
@@ -461,7 +462,6 @@
         let quadDenTex = `(${getPolyTex(a3, b3, c3)})`;
 
         if (trapType === 0) {
-            // Линеен в числителя, повтаря корен от квадратния в числителя
             let b1 = -a1*r1;
             let linTex = `(${getPolyTex(0, a1, b1)})`;
             displayTex = `\\frac{${linTex}${quadNumTex}}{${quadDenTex}} ${sign} 0`;
@@ -473,7 +473,6 @@
             denRoots.push({ type: 'lin', root: r4, a: 1, power: 1, isDenom: true });
             
         } else if (trapType === 1) {
-            // Линеен в числителя, съкращава корен с квадратния в знаменателя
             let b1 = -a1*r3;
             let linTex = `(${getPolyTex(0, a1, b1)})`;
             displayTex = `\\frac{${linTex}${quadNumTex}}{${quadDenTex}} ${sign} 0`;
@@ -485,7 +484,6 @@
             denRoots.push({ type: 'lin', root: r4, a: 1, power: 1, isDenom: true });
             
         } else if (trapType === 2) {
-            // Линеен в знаменателя, съкращава корен с квадратния в числителя
             let b1 = -a1*r1;
             let linTex = `(${getPolyTex(0, a1, b1)})`;
             displayTex = `\\frac{${quadNumTex}}{${linTex}${quadDenTex}} ${sign} 0`;
@@ -497,7 +495,6 @@
             denRoots.push({ type: 'lin', root: r4, a: 1, power: 1, isDenom: true });
             
         } else if (trapType === 3) {
-            // Линеен в знаменателя, повтаря корен от квадратния в знаменателя
             let b1 = -a1*r3;
             let linTex = `(${getPolyTex(0, a1, b1)})`;
             displayTex = `\\frac{${quadNumTex}}{${linTex}${quadDenTex}} ${sign} 0`;
@@ -565,9 +562,9 @@
     }
 
     // 2. Дробно с число (N(x)/D(x) <= C)
-    function generateFractionalRHSProblem() {
+    function generateFractionalRHSProblem(forcedSign) {
         let a_d, b_d, c_d, a_n, b_n, c_n, C, r1, r2, p_roots;
-        let sign = ['>', '<', '\\ge', '\\le'][rand(0, 3)];
+        let sign = forcedSign || ['>', '<', '\\ge', '\\le'][rand(0, 3)];
 
         do {
             do {
@@ -581,11 +578,10 @@
             
             C = [-3, -2, -1, 1, 2, 3][rand(0, 5)];
             
-            let isQuadraticFinal = Math.random() > 0.4; // 60% шанс след прехвърляне да остане квадратен тричлен
+            let isQuadraticFinal = Math.random() > 0.4; 
             p_roots = [r1, r2];
 
             if (isQuadraticFinal) {
-                // Генерираме крайни хубави корени (може и дробни)
                 let a1 = rand(1, 3) * (Math.random()>0.5?1:-1);
                 let b1 = rand(-5, 5);
                 let a2 = rand(1, 3) * (Math.random()>0.5?1:-1);
@@ -602,7 +598,6 @@
                 p_roots.push(b1/a1);
                 p_roots.push(b2/a2);
             } else {
-                // След прехвърляне остава линейно уравнение (x^2 се унищожава)
                 let a1 = rand(1, 5) * (Math.random()>0.5?1:-1);
                 let b1 = rand(-10, 10);
                 
@@ -616,7 +611,7 @@
                 
                 p_roots.push(-b1/a1);
             }
-        } while (a_n === 0); // Гарантираме, че ПЪРВОНАЧАЛНИЯТ числител винаги е квадратен тричлен (a_n != 0)
+        } while (a_n === 0); 
 
         let displayTex = `\\frac{${getPolyTex(a_n, b_n, c_n)}}{${getPolyTex(a_d, b_d, c_d)}} ${sign} ${C}`;
 
@@ -645,15 +640,22 @@
     }
 
     // 3. Система линейни
-    function generateSystemLinearProblem() {
-        let sysSize = 2; // Вече винаги генерира точно 2 неравенства
+    function generateSystemLinearProblem(balance) {
+        let sysSize = 2; 
         let ineqs = [];
-        let signs = ['>', '<', '\\ge', '\\le'];
+        let signs = [];
+        
+        if (balance) {
+            signs = [['>', '<'][rand(0,1)], ['\\ge', '\\le'][rand(0,1)]];
+            signs.sort(() => Math.random() - 0.5); // Разбъркване на местата им
+        } else {
+            signs = [ ['>', '<', '\\ge', '\\le'][rand(0,3)], ['>', '<', '\\ge', '\\le'][rand(0,3)] ];
+        }
 
         for(let i=0; i<sysSize; i++) {
             let a = [-3, -2, -1, 1, 2, 3][rand(0, 5)];
             let r = rand(-5, 5);
-            ineqs.push({ a, b: -a * r, sign: signs[rand(0, 3)], root: r });
+            ineqs.push({ a, b: -a * r, sign: signs[i], root: r });
         }
 
         let texLines = ineqs.map(eq => {
@@ -691,6 +693,7 @@
         if (taskGroups.length === 0) return alert('Моля, добавете поне една група със задачи!');
         
         const showPoints = document.getElementById('g-show-points').checked;
+        const balanceSigns = document.getElementById('g-balance-signs').checked;
         const docTitle = document.getElementById('g-title').value || 'Контролна работа';
         const docSubtitle = document.getElementById('g-subtitle').value || '';
         
@@ -719,6 +722,21 @@
                 </div>
             `;
 
+            let signPool = [];
+            if (balanceSigns) {
+                let totalMain = taskGroups.reduce((s, g) => s + (g.type !== 'system_linear' ? g.count : 0), 0);
+                let strictCount = Math.ceil(totalMain / 2);
+                let nonStrictCount = totalMain - strictCount;
+                for(let i=0; i<strictCount; i++) signPool.push(['>', '<'][rand(0,1)]);
+                for(let i=0; i<nonStrictCount; i++) signPool.push(['\\ge', '\\le'][rand(0,1)]);
+                signPool.sort(() => Math.random() - 0.5); // Разбъркване на знаците
+            }
+
+            const getSign = () => {
+                if (balanceSigns && signPool.length > 0) return signPool.pop();
+                return ['>', '<', '\\ge', '\\le'][rand(0, 3)];
+            };
+
             let problems = [];
             taskGroups.forEach(group => {
                 for (let i = 0; i < group.count; i++) {
@@ -731,7 +749,7 @@
                         for(let j=0; j<group.quadDenom; j++) den.push(generateQuadratic(true));
                         
                         if (num.length === 0 && den.length === 0) num.push({type:'lin', root: rand(-3,3), power:1, isDenom:false, a:1});
-                        let sign = ['>', '<', '\\ge', '\\le'][rand(0, 3)];
+                        let sign = getSign();
                         
                         let numTex = num.map(getFactorTex).join('');
                         let denTex = den.map(getFactorTex).join('');
@@ -741,15 +759,15 @@
                         
                         problems.push({ type: 'standard', num, den, sign, displayTex: `${displayTex} ${sign} 0`, pts: group.points });
                     } else if (group.type === 'fractional_rhs') {
-                        let p = generateFractionalRHSProblem();
+                        let p = generateFractionalRHSProblem(getSign());
                         p.pts = group.points;
                         problems.push(p);
                     } else if (group.type === 'system_linear') {
-                        let p = generateSystemLinearProblem();
+                        let p = generateSystemLinearProblem(balanceSigns);
                         p.pts = group.points;
                         problems.push(p);
                     } else if (group.type === 'trap') {
-                        let p = generateTrapProblem();
+                        let p = generateTrapProblem(getSign());
                         p.pts = group.points;
                         problems.push(p);
                     }
